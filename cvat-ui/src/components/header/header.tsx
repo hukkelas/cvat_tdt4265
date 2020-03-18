@@ -168,6 +168,33 @@ function HeaderContainer(props: Props): JSX.Element {
                 >
                     Tasks
                 </Button>
+                <Button
+                    className='cvat-header-button'
+                    type='link'
+                    value='tasks'
+                >
+                    <a href="/api/v1/download/0/download">Download Dataset</a>
+                </Button>
+                <Button
+                    className='cvat-header-button'
+                    type='link'
+                    value='tasks'
+                    onClick={
+                        (): void => props.history.push('/tasks?page=1')
+                    }
+                >
+                    Upload Result (Not yet available)
+                </Button>
+                <Button
+                    className='cvat-header-button'
+                    type='link'
+                    value='tasks'
+                    onClick={
+                        (): void => props.history.push('/tasks?page=1')
+                    }
+                >
+                    Leaderboard (Not yet available)
+                </Button>
                 { renderModels
                     && (
                         <Button

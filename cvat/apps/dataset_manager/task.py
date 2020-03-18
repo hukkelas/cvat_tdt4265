@@ -13,6 +13,7 @@ import tempfile
 
 from django.utils import timezone
 import django_rq
+from django.conf import settings
 
 from cvat.apps.engine.log import slogger
 from cvat.apps.engine.models import Task
@@ -251,6 +252,66 @@ DEFAULT_FORMAT = EXPORT_FORMAT_DATUMARO_PROJECT
 DEFAULT_CACHE_TTL = timedelta(hours=10)
 CACHE_TTL = DEFAULT_CACHE_TTL
 
+
+def should_update_archive(tasks, archive_path):
+    if not osp.exists(archive_path):
+        return True
+    max_time = max(timezone.localtime(t.updated_date).timestamp() for t in tasks)
+    archive_time = osp.getmtime(archive_path)
+    if max_time < archive_time:
+        return False
+    return True
+
+
+def _export_all_tasks(user, server_url):
+    tasks = Task.objects.all()
+    dst_format = "coco"
+    cache_dir = osp.join(settings.DATA_ROOT, dst_format)
+    save_dir = osp.join(cache_dir, dst_format)
+    archive_path = osp.normpath(save_dir) + '.zip'
+    if not should_update_archive(tasks, archive_path):
+        return archive_path
+    os.makedirs(cache_dir, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+            dir=cache_dir, prefix=dst_format + '_') as temp_dir:
+        for task in tasks:
+            task_cache_dir = osp.join(temp_dir, str(task.id))
+            os.makedirs(task_cache_dir, exist_ok=True)
+            project = TaskProject.from_task(task, user)
+            project.export(
+                dst_format, save_dir=task_cache_dir,
+                save_images=True,
+                server_url=server_url)
+        make_zip_archive(temp_dir, archive_path)
+    archive_ctime = osp.getctime(archive_path)
+    scheduler = django_rq.get_scheduler()
+    cleaning_job = scheduler.enqueue_in(
+        time_delta=CACHE_TTL,
+        func=clear_export_cache,
+        task_id=None,
+        file_path=archive_path,
+        file_ctime=archive_ctime)
+    task = list(tasks)[0] # Just give it a task to log...
+    slogger.task[task.id].info(
+        "The task '{}' is exported as '{}' "
+        "and available for downloading for next '{}'. "
+        "Export cache cleaning job is enqueued, "
+        "id '{}', start in '{}'".format(
+            task.name, dst_format, CACHE_TTL,
+            cleaning_job.id, CACHE_TTL))
+
+    return archive_path
+
+
+def export_all_tasks(user, server_url):
+    return _export_all_tasks(user, server_url)
+    try:
+        return _export_all_tasks(user, server_url)
+    except Exception:
+        log_exception("Export all tasks failed")
+        raise
+
+
 def export_project(task_id, user, dst_format=None, server_url=None):
     try:
         db_task = Task.objects.get(pk=task_id)
@@ -294,13 +355,15 @@ def export_project(task_id, user, dst_format=None, server_url=None):
         log_exception(slogger.task[task_id])
         raise
 
+
 def clear_export_cache(task_id, file_path, file_ctime):
     try:
         if osp.exists(file_path) and osp.getctime(file_path) == file_ctime:
             os.remove(file_path)
-            slogger.task[task_id].info(
-                "Export cache file '{}' successfully removed" \
-                .format(file_path))
+            if task_id != None:
+                slogger.task[task_id].info(
+                    "Export cache file '{}' successfully removed" \
+                    .format(file_path))
     except Exception:
         log_exception(slogger.task[task_id])
         raise

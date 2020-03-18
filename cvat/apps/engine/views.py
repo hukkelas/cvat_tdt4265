@@ -296,6 +296,7 @@ class ProjectViewSet(auth.ProjectGetQuerySetMixin, viewsets.ModelViewSet):
             context={"request": request})
         return Response(serializer.data)
 
+
 class TaskFilter(filters.FilterSet):
     project = filters.CharFilter(field_name="project__name", lookup_expr="icontains")
     name = filters.CharFilter(field_name="name", lookup_expr="icontains")
@@ -309,6 +310,7 @@ class TaskFilter(filters.FilterSet):
         fields = ("id", "project_id", "project", "name", "owner", "mode", "status",
             "assignee")
 
+
 class DjangoFilterInspector(CoreAPICompatInspector):
     def get_filter_parameters(self, filter_backend):
         if isinstance(filter_backend, DjangoFilterBackend):
@@ -321,6 +323,35 @@ class DjangoFilterInspector(CoreAPICompatInspector):
             return res
 
         return NotHandled
+
+
+class DownloadView(viewsets.ReadOnlyModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+    @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
+        responses={'202': openapi.Response(description='Dump of annotations has been started'),
+            '201': openapi.Response(description='Annotations file is ready to download'),
+            '200': openapi.Response(description='Download of file started')})
+    @action(detail=True, methods=['GET'], serializer_class=None,
+        url_path='download')
+    def dataset_export(self, request, pk):
+        try:
+            server_address = request.get_host()
+        except Exception:
+            server_address = None
+        file_path = DatumaroTask.export_all_tasks(request.user, server_address)
+        if osp.exists(file_path):
+
+            timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            filename = "dataset_-{}.zip".format(timestamp)
+            return sendfile(request, file_path, attachment=True,
+                attachment_filename=filename.lower())
+        else:
+            return Response("Could not export dataset. Contact student assistants at hakon.hukkelas@ntnu.no or on piazza.",
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(status=status.HTTP_202_ACCEPTED)
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
     operation_summary='Returns a paginated list of tasks according to query parameters (10 tasks per page)',

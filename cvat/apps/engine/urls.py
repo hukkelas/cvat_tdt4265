@@ -30,6 +30,7 @@ router.register('jobs', views.JobViewSet)
 router.register('users', views.UserViewSet)
 router.register('server', views.ServerViewSet, basename='server')
 router.register('plugins', views.PluginViewSet)
+router.register('download', views.DownloadView)
 
 urlpatterns = [
     # Entry point for a client
