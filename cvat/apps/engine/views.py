@@ -5,7 +5,9 @@
 import os
 import os.path as osp
 import re
+import pathlib
 import traceback
+import zipfile
 from ast import literal_eval
 import shutil
 from datetime import datetime
@@ -354,6 +356,35 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(status=status.HTTP_202_ACCEPTED)
+
+    @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
+        responses={'202': openapi.Response(description='Dump of annotations has been started'),
+            '201': openapi.Response(description='Annotations file is ready to download'),
+            '200': openapi.Response(description='Download of file started')})
+    @action(detail=True, methods=['GET'], serializer_class=None,
+        url_path='download_images')    
+    def image_export(self, request, pk):
+        archive_path = pathlib.Path(settings.DATA_ROOT, "images.zip")
+        if archive_path.is_file():
+            return sendfile(
+                request, str(archive_path), attachment=True,
+                attachment_filename=archive_path.name.lower())
+        source_to_target_path = {}
+        for task in Task.objects.all():
+            for frame_idx in range(task.size):
+                source_path = task.get_frame_path(frame_idx)
+                suffix = pathlib.Path(source_path).suffix
+                target_path = pathlib.Path(
+                    "images", str(task.id), str(frame_idx) + suffix)
+                source_to_target_path[source_path] = target_path
+
+        with zipfile.ZipFile(str(archive_path), "w") as fp:
+            for spath, tpath in source_to_target_path.items():
+                fp.write(str(spath), str(tpath))
+        return sendfile(
+            request, str(archive_path), attachment=True,
+            attachment_filename=str(archive_path.name).lower())
+
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
     operation_summary='Returns a paginated list of tasks according to query parameters (10 tasks per page)',
