@@ -273,6 +273,9 @@ def _export_all_tasks(user, download_test, server_url):
     archive_path = osp.normpath(save_dir) 
     archive_path += '.zip'
     if not should_update_archive(tasks, archive_path):
+        slogger.task[list(tasks)[0].id].info(
+            "Returning archive at path:" + archive_path
+        )
         return archive_path
     os.makedirs(cache_dir, exist_ok=True)
     with tempfile.TemporaryDirectory(
@@ -280,7 +283,10 @@ def _export_all_tasks(user, download_test, server_url):
         for task in tasks:
             if task.is_test() and not download_test:
                 continue
-            task_cache_dir = osp.join(temp_dir, str(task.id))
+            subfolder = "train"
+            if task.is_test():
+                subfolder = "test"
+            task_cache_dir = osp.join(temp_dir, subfolder, str(task.id))
             os.makedirs(task_cache_dir, exist_ok=True)
             project = TaskProject.from_task(task, user)
             project.export(
