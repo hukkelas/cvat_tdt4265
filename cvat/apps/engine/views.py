@@ -33,6 +33,7 @@ from django.utils import timezone
 from . import annotation, task, models
 from cvat.settings.base import JS_3RDPARTY, CSS_3RDPARTY
 from cvat.apps.authentication.decorators import login_required
+from cvat.apps.authentication.auth import has_admin_role
 from .log import slogger, clogger
 from cvat.apps.engine.models import StatusChoice, Task, Job, Plugin
 from cvat.apps.engine.serializers import (TaskSerializer, UserSerializer,
@@ -340,7 +341,8 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
             server_address = request.get_host()
         except Exception:
             server_address = None
-        file_path = DatumaroTask.export_all_tasks(request.user, server_address)
+        download_test = has_admin_role(request.user)
+        file_path = DatumaroTask.export_all_tasks(request.user, download_test, server_address)
         if osp.exists(file_path):
 
             timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")

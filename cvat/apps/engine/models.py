@@ -5,7 +5,6 @@
 from enum import Enum
 
 import re
-import shlex
 import os
 
 from django.db import models
@@ -48,6 +47,7 @@ class Project(models.Model):
     # Extend default permission model
     class Meta:
         default_permissions = ()
+
 
 class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE,
@@ -113,6 +113,15 @@ class Task(models.Model):
 
     def get_task_dirname(self):
         return os.path.join(settings.DATA_ROOT, str(self.id))
+
+    def get_video(self):
+        return Video.objects.get(task=self)
+
+    def is_test(self):
+        video_path = self.get_video().path
+        video_name = os.path.basename(video_path)
+        is_test = settings.FILENAME_TO_IS_TEST[video_name]
+        return is_test
 
     def __str__(self):
         return self.name

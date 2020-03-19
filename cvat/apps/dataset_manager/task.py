@@ -263,24 +263,29 @@ def should_update_archive(tasks, archive_path):
     return True
 
 
-def _export_all_tasks(user, server_url):
+def _export_all_tasks(user, download_test, server_url):
     tasks = Task.objects.all()
     dst_format = "coco"
     cache_dir = osp.join(settings.DATA_ROOT, dst_format)
+    if download_test:
+        cache_dir = osp.join(cache_dir, "test")
     save_dir = osp.join(cache_dir, dst_format)
-    archive_path = osp.normpath(save_dir) + '.zip'
+    archive_path = osp.normpath(save_dir) 
+    archive_path += '.zip'
     if not should_update_archive(tasks, archive_path):
         return archive_path
     os.makedirs(cache_dir, exist_ok=True)
     with tempfile.TemporaryDirectory(
             dir=cache_dir, prefix=dst_format + '_') as temp_dir:
         for task in tasks:
+            if task.is_test() and not download_test:
+                continue
             task_cache_dir = osp.join(temp_dir, str(task.id))
             os.makedirs(task_cache_dir, exist_ok=True)
             project = TaskProject.from_task(task, user)
             project.export(
                 dst_format, save_dir=task_cache_dir,
-                save_images=True,
+                save_images=False,
                 server_url=server_url)
         make_zip_archive(temp_dir, archive_path)
     archive_ctime = osp.getctime(archive_path)
@@ -303,10 +308,9 @@ def _export_all_tasks(user, server_url):
     return archive_path
 
 
-def export_all_tasks(user, server_url):
-    return _export_all_tasks(user, server_url)
+def export_all_tasks(user, download_test, server_url):
     try:
-        return _export_all_tasks(user, server_url)
+        return _export_all_tasks(user, download_test, server_url)
     except Exception:
         log_exception("Export all tasks failed")
         raise

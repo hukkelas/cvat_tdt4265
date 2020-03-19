@@ -401,3 +401,16 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100 MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None   # this django check disabled
 LOCAL_LOAD_MAX_FILES_COUNT = 500
 LOCAL_LOAD_MAX_FILES_SIZE = 512 * 1024 * 1024  # 512 MB
+
+
+
+# Load filenames and if they are train or not.
+FILENAME_TO_IS_TEST = {}
+assert os.path.isfile("scripts/is_train.txt"),\
+    "Did not find test/train split file: scripts/is_train.txt"
+with open("scripts/is_train.txt", "r") as fp:
+    lines = list(fp.readlines())
+    for line in lines:
+        is_test, filename = line.split(", ")
+        is_test = is_test.strip() == 'True'
+        FILENAME_TO_IS_TEST[filename.strip()] = is_test
