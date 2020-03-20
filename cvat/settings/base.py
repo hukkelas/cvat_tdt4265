@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'cvat.apps.git',
     'cvat.apps.dataset_manager',
     'cvat.apps.annotation',
+    'cvat.apps.project_submission',
     'django_rq',
     'compressor',
     'cacheops',
@@ -171,6 +172,8 @@ if os.getenv('DJANGO_LOG_VIEWER_HOST'):
 # new feature by Mohammad
 if 'yes' == os.environ.get('AUTO_SEGMENTATION', 'no'):
     INSTALLED_APPS += ['cvat.apps.auto_segmentation']
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -397,6 +400,8 @@ os.makedirs(SHARE_ROOT, exist_ok=True)
 
 MODELS_ROOT = os.path.join(BASE_DIR, 'models')
 os.makedirs(MODELS_ROOT, exist_ok=True)
+
+TDT4265_ANNOTATION_GT_FILE = os.path.join(DATA_ROOT, 'tdt4265_project_annotation_gt.json')
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100 MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None   # this django check disabled
