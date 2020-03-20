@@ -14,7 +14,7 @@ from datetime import datetime
 from tempfile import mkstemp
 
 from django.views.generic import RedirectView
-from django.http import HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import render
 from django.conf import settings
 from sendfile import sendfile
@@ -57,6 +57,7 @@ from drf_yasg import openapi
 from django.utils.decorators import method_decorator
 from drf_yasg.inspectors import NotHandled, CoreAPICompatInspector
 from django_filters.rest_framework import DjangoFilterBackend
+from cvat.apps.annotation import annotation_exporter
 
 # drf-yasg component doesn't handle correctly URL_FORMAT_OVERRIDE and
 # send requests with ?format=openapi suffix instead of ?scheme=openapi.
@@ -333,29 +334,23 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
     serializer_class = TaskSerializer
 
     @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
-        responses={'202': openapi.Response(description='Dump of annotations has been started'),
-            '201': openapi.Response(description='Annotations file is ready to download'),
-            '200': openapi.Response(description='Download of file started')})
+        responses={'200': openapi.Response(description='Download of file started')})
     @action(detail=True, methods=['GET'], serializer_class=None,
         url_path='download')
     def dataset_export(self, request, pk):
-        try:
-            server_address = request.get_host()
-        except Exception:
-            server_address = None
         download_test = has_admin_role(request.user)
-        file_path = DatumaroTask.export_all_tasks(request.user, download_test, server_address)
-        if osp.exists(file_path):
-
-            timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            filename = "dataset_-{}.zip".format(timestamp)
-            return sendfile(request, file_path, attachment=True,
-                attachment_filename=filename.lower())
-        else:
-            return Response("Could not export dataset. Contact student assistants at hakon.hukkelas@ntnu.no or on piazza.",
+        try:
+            annotations = annotation_exporter.get_all_annotations(
+                include_test=download_test,
+            )
+        except Exception:
+            return Response(
+                "Could not export dataset. Contact student assistants at hakon.hukkelas@ntnu.no or on piazza.",
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(status=status.HTTP_202_ACCEPTED)
+        response = JsonResponse(annotations, safe=False)
+        response["Content-Disposition"] = "attachement; filename=dump.json"
+        response.status_code = status.HTTP_200_OK
+        return response
 
     @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
         responses={'202': openapi.Response(description='Dump of annotations has been started'),

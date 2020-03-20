@@ -122,6 +122,14 @@ class Task(models.Model):
         video_name = os.path.basename(video_path)
         is_test = settings.FILENAME_TO_IS_TEST[video_name]
         return is_test
+    
+    def get_global_image_id(self, frame_idx):
+        # We make the assumption that every video is 20s or less at 35 FPS. +50 frames for buffer.
+        assert self.size < 750
+        assert frame_idx < 750
+        global_image_id = 750 * self.id + frame_idx
+        return global_image_id
+
 
     def __str__(self):
         return self.name

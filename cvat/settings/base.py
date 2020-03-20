@@ -19,6 +19,7 @@ import sys
 import fcntl
 import shutil
 import subprocess
+import json
 
 from pathlib import Path
 
@@ -414,3 +415,17 @@ with open("scripts/is_train.txt", "r") as fp:
         is_test, filename = line.split(", ")
         is_test = is_test.strip() == 'True'
         FILENAME_TO_IS_TEST[filename.strip()] = is_test
+
+
+def load_labelmap():
+    label_path = "scripts/labelmap.json"
+    assert os.path.isfile(label_path)
+    label_map = {}
+    with open(label_path, "r") as fp:
+        for label in json.load(fp):
+            label_map[label["name"]] = label["id"]
+            label_map[label["id"]] = label["name"]
+    return label_map
+
+
+LABEL_MAP = load_labelmap()
