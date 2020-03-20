@@ -345,6 +345,12 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
         queue = django_rq.get_queue("default")
         rq_job = queue.fetch_job(rq_id)
         download_test = has_admin_role(request.user)
+        if annotation_exporter.annotation_file_ready(download_test):
+            filepath = annotation_exporter.get_annotation_filepath(download_test)
+            return sendfile(
+                request, filepath, attachment=True,
+                attachment_filename=osp.basename(filepath)
+            )
         if not rq_job:
             queue.enqueue_call(
                 func=annotation_exporter.get_annotation_filepath,

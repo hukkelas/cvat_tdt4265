@@ -80,8 +80,8 @@ def should_update_annotation(include_test):
     current_time = timezone.localtime().timestamp()
     if max_time > archive_time and archive_time > (current_time + 60*60*12):
         return True
-    # Only update the zip file after waiting 1 hours from the last update
-    next_update_time = archive_time + 60*60
+    # Only update the zip file after waiting .5 hours from the last update
+    next_update_time = archive_time + 60*30
     if max_time < next_update_time:
         return False
 
