@@ -398,7 +398,7 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
                 if task.is_test():
                     subfolder = "test"
                 target_path = pathlib.Path(
-                    subfolder, "images", str(task.get_global_image_id()) + suffix)
+                    subfolder, "images", str(task.get_global_image_id(frame_idx)) + suffix)
                 source_to_target_path[source_path] = target_path
 
         with zipfile.ZipFile(str(archive_path), "w") as fp:
