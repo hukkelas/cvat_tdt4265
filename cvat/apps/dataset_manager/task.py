@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 import os
 import os.path as osp
@@ -256,9 +256,11 @@ CACHE_TTL = DEFAULT_CACHE_TTL
 def should_update_archive(tasks, archive_path):
     if not osp.exists(archive_path):
         return True
-    max_time = max(timezone.localtime(t.updated_date).timestamp() for t in tasks)
+    max_time = max(timezone.localtime(t.updated_date).timestamp() for t in tasks) 
+    max_time = max_time
     archive_time = osp.getmtime(archive_path)
-    if max_time < archive_time:
+    # Only update the zip file after waiting 6 hours from the last update
+    if max_time < (archive_time + 60*60*6):
         return False
     return True
 
@@ -278,6 +280,8 @@ def _export_all_tasks(user, download_test, server_url):
         )
         return archive_path
     os.makedirs(cache_dir, exist_ok=True)
+    import time
+    time.sleep(60*2)
     with tempfile.TemporaryDirectory(
             dir=cache_dir, prefix=dst_format + '_') as temp_dir:
         for task in tasks:
@@ -359,7 +363,6 @@ def export_project(task_id, user, dst_format=None, server_url=None):
                 "id '{}', start in '{}'".format(
                     db_task.name, dst_format, CACHE_TTL,
                     cleaning_job.id, CACHE_TTL))
-
         return archive_path
     except Exception:
         log_exception(slogger.task[task_id])
