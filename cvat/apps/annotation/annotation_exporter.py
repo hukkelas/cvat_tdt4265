@@ -1,10 +1,14 @@
+import pathlib
+import json
+import os.path as osp
+import time
 from cvat.apps.engine.models import Task, StatusChoice
 from django.db import transaction
 from cvat.apps.engine.annotation import TaskAnnotation
 from cvat.apps.annotation.annotation import Annotation
 from django.conf import settings
 from cvat.apps.engine.log import slogger
-
+from django.utils import timezone
 
 def get_annotation(task, include_test):
     with transaction.atomic():
@@ -55,3 +59,44 @@ def get_all_annotations(include_test):
             get_annotation(task, include_test)
         )
     return annotations
+
+
+def get_json_path(include_test):
+    label_name = "labels"
+    if include_test:
+        label_name = label_name + "_test"
+    json_path = pathlib.Path(settings.DATA_ROOT, label_name + ".json")
+    return str(json_path)
+
+
+def should_update_annotation(include_test):
+    json_path = get_json_path(include_test)
+    tasks = Task.objects.all()
+    if not osp.exists(json_path):
+        return True
+    max_time = max(timezone.localtime(t.updated_date).timestamp() for t in tasks)
+    archive_time = osp.getmtime(json_path)
+    # If max time is larger than archive time and 
+    current_time = timezone.localtime().timestamp()
+    if max_time > archive_time and archive_time > (current_time + 60*60*12):
+        return True
+    # Only update the zip file after waiting 1 hours from the last update
+    next_update_time = archive_time + 60*60
+    if max_time < next_update_time:
+        return False
+
+    return True
+
+
+def get_annotation_filepath(include_test):
+    json_path = get_json_path(include_test)
+    if not should_update_annotation(include_test):
+        return json_path
+    annotations = get_all_annotations(include_test)
+    with open(json_path, "w") as fp:
+        json.dump(annotations, fp)
+    return json_path
+
+
+def annotation_file_ready(include_test):
+    return not should_update_annotation(include_test)

@@ -14,7 +14,7 @@ from datetime import datetime
 from tempfile import mkstemp
 
 from django.views.generic import RedirectView
-from django.http import HttpResponseBadRequest, HttpResponseNotFound, JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponseNotFound, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.conf import settings
 from sendfile import sendfile
@@ -334,23 +334,42 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
     serializer_class = TaskSerializer
 
     @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
-        responses={'200': openapi.Response(description='Download of file started')})
+        responses={
+            '200': openapi.Response(description='Download of file started'),
+            '202': openapi.Response(description='Dump of annotations has been started. Try again in two minutes.')
+            })
     @action(detail=True, methods=['GET'], serializer_class=None,
         url_path='download')
     def dataset_export(self, request, pk):
+        rq_id = "/api/v1/download/0/download"
+        queue = django_rq.get_queue("default")
+        rq_job = queue.fetch_job(rq_id)
         download_test = has_admin_role(request.user)
-        try:
-            annotations = annotation_exporter.get_all_annotations(
-                include_test=download_test,
+        if not rq_job:
+            queue.enqueue_call(
+                func=annotation_exporter.get_annotation_filepath,
+                args=(download_test,),
+                job_id=rq_id,
+                meta={"request_time": timezone.localtime()},
+                result_ttl=60*60*1,
+                failure_ttl=60*60*1)
+            return Response(status=status.HTTP_202_ACCEPTED)
+        if rq_job.is_finished:
+            filepath = rq_job.return_value
+            assert osp.exists(filepath)
+            rq_job.delete()
+            name = osp.basename(filepath)
+            return sendfile(
+                request, filepath, attachment=True,
+                attachment_filename=name
             )
-        except Exception:
+        if rq_job.is_failed:
+            rq_job.delete()
             return Response(
-                "Could not export dataset. Contact student assistants at hakon.hukkelas@ntnu.no or on piazza.",
+                "Could not export dataset. Contact TA at hakon.hukkelas@ntnu.no or on piazza.",
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        response = JsonResponse(annotations, safe=False)
-        response["Content-Disposition"] = "attachement; filename=dump.json"
-        response.status_code = status.HTTP_200_OK
-        return response
+        return Response(status=status.HTTP_202_ACCEPTED)
+
 
     @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
         responses={'202': openapi.Response(description='Dump of annotations has been started'),
@@ -373,7 +392,7 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
                 if task.is_test():
                     subfolder = "test"
                 target_path = pathlib.Path(
-                    subfolder, "images", str(task.id), str(frame_idx) + suffix)
+                    subfolder, "images", str(task.get_global_image_id()) + suffix)
                 source_to_target_path[source_path] = target_path
 
         with zipfile.ZipFile(str(archive_path), "w") as fp:
