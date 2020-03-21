@@ -382,7 +382,7 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
             '201': openapi.Response(description='Annotations file is ready to download'),
             '200': openapi.Response(description='Download of file started')})
     @action(detail=True, methods=['GET'], serializer_class=None,
-        url_path='download_images')    
+        url_path='download_images')
     def image_export(self, request, pk):
         archive_path = pathlib.Path(settings.DATA_ROOT, "images.zip")
         if archive_path.is_file():
@@ -407,6 +407,21 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
         return sendfile(
             request, str(archive_path), attachment=True,
             attachment_filename=str(archive_path.name).lower())
+
+
+    @swagger_auto_schema(method='get', operation_summary='Export entire dataset as COCO',
+        responses={'202': openapi.Response(description='Dump of annotations has been started'),
+            '201': openapi.Response(description='Annotations file is ready to download'),
+            '200': openapi.Response(description='Download of file started')})
+    @action(detail=True, methods=['GET'], serializer_class=None,
+        url_path='download_images_five_fps')    
+    def image_export_min(self, request, pkl):
+        archive_path = pathlib.Path(settings.DATA_ROOT, "images_mini.zip")
+        assert archive_path.is_file(), "DId not find image file:" + archive_path
+        return sendfile(
+            request, str(archive_path), attachment=True,
+            attachment_filename=str(archive_path.name).lower())
+
 
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
