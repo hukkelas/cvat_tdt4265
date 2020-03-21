@@ -1,7 +1,33 @@
+{% extends "project_submission/base.html" %}
 
-<h1>Test</h1>
+{% block body %}
+<div class="cvat-tasks-page">
+  <div class="ant-row-flex ant-row-flex-center ant-row-flex-middle">
+    <div class="ant-col ant-col-md-22 ant-col-lg-18 ant-col-xl-16 ant-col-xxl-14">
+      <span class="ant-typography">
+        <strong>Group: {{ request.user }}</strong>
+      </span>
+    </div>
+  </div>
+  <div class="ant-row-flex ant-row-flex-center">
+    <div class="ant-col">
+      <span class="ant-typography cvat-title">
+        <span>Submit annotation</span>
+      </span>
+    </div>
+  </div>
+  <div class="ant-row-flex ant-row-flex-center">
+    <div class="ant-tabs-tabpane">
+      <form enctype="multipart/form-data" action="." method="post">
+        {% csrf_token %}
+          <fieldset>
+            {{ form }}
+          </fieldset>
+          <br>
+         <input type="submit" class="ant-btn ant-btn-primary" value="Submit">
+      </form>
+    </div>
+  </div>
+</div>
 
-<form>
-  {{form}}
-  <input type="submit" value="Submit">
-</form>
+{% endblock %} {# body #}

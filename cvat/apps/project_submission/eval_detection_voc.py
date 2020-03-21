@@ -6,38 +6,72 @@ from collections import defaultdict
 import itertools
 import numpy as np
 import six
+import json
 
 from django.conf import settings
 
-ground_truth_annotation = None
+solution_annotation = None
 
-def annotation_file_to_np_arrays(annotation_filepath: str):
-    # load...
+def annotation_file_to_np_arrays(annotation_filefield):
+    # dicts in case the submittes img annotations are not ordered sequentially
+    labels = {}
+    scores = {}
+    bboxes = {}
+
+    # Same as is called when validating a submitted file
+    # So this should never fail (don't quote me on that)
+    annotation_json = json.loads(annotation_filefield.read().decode())
+    # Just loop over images to create the np.ndarrays
+    for image_annotation in annotation_json:
+        image_id = image_annotation['image_id']
+        labels[image_id] = np.array([bbox['label'] for bbox in image_annotation['bboxes']])
+        scores[image_id] = np.array([bbox['confidence'] for bbox in image_annotation['bboxes']])
+        bboxes[image_id] = np.array([
+            [bbox['ymin'], bbox['xmin'], bbox['ymax'], bbox['xmax']]
+            for bbox in image_annotation['bboxes']])
 
     annotation = {
-        'bboxes': [],
-        'labels': [],
-        'scores': [],
+        'bboxes': [v for k,v in sorted(bboxes.items(), key=lambda x: x[0])],
+        'labels': [v for k,v in sorted(labels.items(), key=lambda x: x[0])],
+        'scores': [v for k,v in sorted(scores.items(), key=lambda x: x[0])],
     }
+
+    print(annotation)
+
     return annotation
 
-def compute_submission_map(submission_filepath: str ):
-    global ground_truth_annotation
-    if ground_truth_annotation is None:
-        ground_truth_annotation = annotation_file_to_np_arrays(settings.TDT4265_ANNOTATION_GT_FILE)
-    group_annotation = annotation_file_to_np_arrays(submission_filepath)
+def compute_submission_map(submission_filefield,
+                           solution_filefield,
+                           leaderboard_data_amount: float = 0.3):
+    global solution_annotation
+    if solution_annotation is None:
+        # Cache in memory
+        solution_annotation = annotation_file_to_np_arrays(solution_filefield)
+    group_annotation = annotation_file_to_np_arrays(submission_filefield)
 
-    result = eval_detection_voc(
-        pred_bboxes=group_annotation['bboxes'],
-        pred_labels=group_annotation['labels'],
-        pred_scores=group_annotation['scores'],
-        gt_bboxes=ground_truth_annotation['bboxes'],
-        gt_labels=ground_truth_annotation['labels'],
-    )
+    try:
+        total_result = eval_detection_voc(
+            pred_bboxes=group_annotation['bboxes'],
+            pred_labels=group_annotation['labels'],
+            pred_scores=group_annotation['scores'],
+            gt_bboxes=solution_annotation['bboxes'],
+            gt_labels=solution_annotation['labels'],
+        )
 
-    return result['map']
+        num_images = len(solution_annotation['bboxes'])
+        leaderboard_num_images = int(np.ceil(leaderboard_data_amount * num_images))
 
-
+        leaderboard_result =  eval_detection_voc(
+            pred_bboxes=group_annotation['bboxes'][:leaderboard_num_images],
+            pred_labels=group_annotation['labels'][:leaderboard_num_images],
+            pred_scores=group_annotation['scores'][:leaderboard_num_images],
+            gt_bboxes=solution_annotation['bboxes'][:leaderboard_num_images],
+            gt_labels=solution_annotation['labels'][:leaderboard_num_images],
+        )
+        return total_result['map'], leaderboard_result['map']
+    except ValueError:
+        # Incompatible lengths.
+        return None, None
 
 
 def bbox_iou(bbox_a, bbox_b):

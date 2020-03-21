@@ -1,0 +1,54 @@
+{% extends "project_submission/base.html" %}
+
+{% block body %}
+<div class="cvat-tasks-page">
+  <div class="ant-row-flex ant-row-flex-center ant-row-flex-middle">
+    <div class="ant-col ant-col-md-22 ant-col-lg-18 ant-col-xl-16 ant-col-xxl-14">
+      <span class="ant-typography">
+        <strong>Group: {{ request.user }}</strong>
+      </span>
+    </div>
+  </div>
+
+  <div class="ant-row-flex ant-row-flex-center">
+    <div class="ant-col">
+      <span class="ant-typography cvat-title">Leaderboard</span>
+    </div>
+  </div>
+  <hr>
+  <div class="ant-row-flex ant-row-flex-center">
+    <table cellpadding="6">
+      <thead>
+        <tr>
+          <th><strong class="ant-typography">Rank</strong></th>
+          <th><strong class="ant-typography">Group</strong></th>
+          <th><strong class="ant-typography">MAP Result</strong></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for submission in submissions %}
+        <tr>
+          <td><span class="ant-typography">{{ forloop.counter }}</span></td>
+          <td><span class="ant-typography">{{ submission.user }}</span></td>
+          <td><span class="ant-typography">{{ submission.mean_average_precision_leaderboard }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <br>
+   <div class="ant-row-flex ant-row-flex-center">
+    <span class="ant-typography">Only the highest score from a group is shown. The MAP score is based on a subset of the test set, so the score isn't entirely representative for the project results.</span>
+   </div>
+   <div class="ant-row-flex ant-row-flex-center">
+     <form action="." method="post">
+       {% csrf_token %}
+       <fieldset>
+         {{ form }}
+       </fieldset>
+       <br>
+       <input type="submit" class="ant-btn ant-btn-primary" value="Save">
+     </form>
+   </div>
+</div>
+{% endblock %} {# body #}
