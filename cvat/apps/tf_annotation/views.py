@@ -258,8 +258,8 @@ def create(request, tid):
             raise Exception("The process is already running")
 
         db_labels = db_task.label_set.prefetch_related('attributespec_set').all()
-        db_labels = {db_label.id:db_label.name for db_label in db_labels}
-
+        db_labels = {db_label.id: db_label.name for db_label in db_labels}
+        
         tf_annotation_labels = {
             "person": 1, "bicycle": 2, "car": 3, "motorcycle": 4, "airplane": 5,
             "bus": 6, "train": 7, "truck": 8, "boat": 9, "traffic_light": 10,
@@ -278,12 +278,20 @@ def create(request, tid):
             "book": 84, "clock": 85, "vase": 86, "scissors": 87, "teddy_bear": 88, "hair_drier": 89,
             "toothbrush": 90
             }
-
-        labels_mapping = {}
+        db_labels_ = {db_label.name: db_label.id for db_label in db_labels}
+        labels_mapping = {
+            tf_annotation_labels["car"]: db_labels_["vehicle"],
+            tf_annotation_labels["person"]: db_labels_["person"],
+            tf_annotation_labels["bicycle"]: db_labels_["cyclist"],
+            tf_annotation_labels["motorcycle"]: db_labels_["vehicle"],
+            tf_annotation_labels["bus"]: db_labels_["vehicle"],
+            tf_annotation_labels["truck"]: db_labels_["vehicle"],
+            tf_annotation_labels["traffic light"]: db_labels_["sign"],
+            tf_annotation_labels["stop sign"]: db_labels_["sign"],
+        }
         for key, labels in db_labels.items():
             if labels in tf_annotation_labels.keys():
                 labels_mapping[tf_annotation_labels[labels]] = key
-
         if not len(labels_mapping.values()):
             raise Exception('No labels found for tf annotation')
 

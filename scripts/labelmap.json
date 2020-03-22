@@ -1,48 +1,23 @@
 [
     {
-      "name": "car",
-      "id": 1,
+      "name": "vehicle",
+      "id": 0,
       "attributes": []
     },
     {
       "name": "person",
+      "id": 1,
+      "attributes": []
+    },
+    {
+      "name": "sign",
       "id": 2,
       "attributes": []
     },
     {
-      "name": "bicycle",
+      "name": "cyclist",
       "id": 3,
       "attributes": []
     },
-    {
-      "name": "motorcycle",
-      "id": 4,
-      "attributes": []
-    },
-    {
-      "name": "bus",
-      "id": 5,
-      "attributes": []
-    },
-    {
-      "name": "truck",
-      "id": 6,
-      "attributes": []
-    },
-    {
-      "name": "traffic light",
-      "id": 7,
-      "attributes": []
-    },
-    {
-      "name": "stop sign",
-      "id": 8,
-      "attributes": []
-    },
-    {
-      "name": "dog",
-      "id": 9,
-      "attributes": []
-    }
   ]
   
