@@ -24,20 +24,17 @@ def annotation_file_to_np_arrays(annotation_filefield):
     # Just loop over images to create the np.ndarrays
     for image_annotation in annotation_json:
         image_id = image_annotation['image_id']
-        labels[image_id] = np.array([bbox['label'] for bbox in image_annotation['bboxes']])
-        scores[image_id] = np.array([bbox['confidence'] for bbox in image_annotation['bboxes']])
+        labels[image_id] = np.array([settings.LABEL_MAP[bbox['label']] for bbox in image_annotation['bounding_boxes']])
+        scores[image_id] = np.array([bbox.get('confidence', 1.0) for bbox in image_annotation['bounding_boxes']])
         bboxes[image_id] = np.array([
             [bbox['ymin'], bbox['xmin'], bbox['ymax'], bbox['xmax']]
-            for bbox in image_annotation['bboxes']])
+            for bbox in image_annotation['bounding_boxes']])
 
     annotation = {
         'bboxes': [v for k,v in sorted(bboxes.items(), key=lambda x: x[0])],
         'labels': [v for k,v in sorted(labels.items(), key=lambda x: x[0])],
         'scores': [v for k,v in sorted(scores.items(), key=lambda x: x[0])],
     }
-
-    print(annotation)
-
     return annotation
 
 def compute_submission_map(submission_filefield,
