@@ -21,8 +21,8 @@ def is_primary_model(_, db_dl_model):
 def setup_permissions():
     rules.add_perm('auto_annotation.model.create', has_admin_role)
 
-    rules.add_perm('auto_annotation.model.update', (has_admin_role)
+    rules.add_perm('auto_annotation.model.update', has_admin_role)
 
-    rules.add_perm('auto_annotation.model.delete', (has_admin_role)
+    rules.add_perm('auto_annotation.model.delete', has_admin_role)
 
     rules.add_perm('auto_annotation.model.access', has_admin_role)
