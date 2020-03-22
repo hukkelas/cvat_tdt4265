@@ -21,7 +21,7 @@ class ProjectSubmission(models.Model):
         null=True,
         default=None,
         verbose_name="Group",
-        related_name="project_submission"
+        related_name="project_submissions"
     )
     submission_json = models.FileField(
         upload_to="submissions/%Y",
@@ -59,7 +59,14 @@ class ProjectSubmission(models.Model):
 
     def update_mean_average_precision(self):
         with transaction.atomic():
-            solution = ProjectSubmission.objects.filter(is_solution=True).first()
+            solution = ProjectSubmission.objects.filter(is_solution=True)
+            if not solution.exists():
+                self.mean_average_precision_leaderboard = None
+                self.mean_average_precision_total = None
+                self.save()
+                return
+
+            solution = solution.first()
             if self == solution:
                 self.mean_average_precision_leaderboard = 1.0
                 self.mean_average_precision_total = 1.0
@@ -69,19 +76,10 @@ class ProjectSubmission(models.Model):
                 self.mean_average_precision_total = map_tot
             self.save()
 
-    @classmethod
-    def update_mean_average_precisions(cls, recompute_all=False):
-        if recompute_all:
-            submissions = ProjectSubmission.objects.all()
-        else:
-            submissions = ProjectSubmission.objects.filter(mean_average_precision=None)
-        for s in submissions:
-            s.update_mean_average_precision()
-
     def __str__(self):
         if self.is_solution:
             return 'Solution'
-        return 'Submission ' + str(os.path.basename(self.submission_json.name)) + ' submitted at ' + str(self.timestamp)
+        return 'Submission ' + str(os.path.basename(self.submission_json.name)) + ' from ' + str(self.user) + ' submitted at ' + str(self.timestamp)
 
 
 
