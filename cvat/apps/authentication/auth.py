@@ -156,7 +156,7 @@ rules.add_perm('engine.task.delete', has_admin_role | is_task_owner)
 rules.add_perm('engine.job.access', has_admin_role | has_observer_role |
     is_job_owner | is_job_annotator)
 
-rules.add_perm('engine.job.change', has_admin_role)
+rules.add_perm('engine.job.change', has_admin_role | is_job_owner | is_job_annotator)
 
 
 class AdminRolePermission(BasePermission):
