@@ -415,7 +415,7 @@ class DownloadView(viewsets.ReadOnlyModelViewSet):
             '200': openapi.Response(description='Download of file started')})
     @action(detail=True, methods=['GET'], serializer_class=None,
         url_path='download_images_five_fps')    
-    def image_export_min(self, request, pkl):
+    def image_export_min(self, request, pk):
         archive_path = pathlib.Path(settings.DATA_ROOT, "images_mini.zip")
         assert archive_path.is_file(), "DId not find image file:" + archive_path
         return sendfile(
