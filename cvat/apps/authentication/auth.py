@@ -121,6 +121,10 @@ def is_job_annotator(db_user, db_job):
 
     return has_rights
 
+@rules.predicate
+def has_task_no_assignee(db_user, db_task):
+    return db_task.assignee == None
+
 # AUTH PERMISSIONS RULES
 
 rules.add_perm('engine.role.user', has_user_role)
@@ -148,8 +152,7 @@ rules.add_perm('engine.task.access', has_admin_role | has_observer_role |
 
 #Original permissions for task_change
 #rules.add_perm('engine.task.change', has_admin_role | is_task_owner | is_task_assignee)
-rules.add_perm('engine.task.change', has_admin_role | is_task_owner |
-    is_task_assignee | is_task_annotator)
+rules.add_perm('engine.task.change', has_admin_role | has_task_no_assignee)
 
 rules.add_perm('engine.task.delete', has_admin_role)
 
