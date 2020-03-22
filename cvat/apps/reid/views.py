@@ -27,7 +27,7 @@ def _create_thread(jid, data):
 def start(request, jid):
     try:
         data = json.loads(request.body.decode('utf-8'))
-        queue = django_rq.get_queue("low")
+        queue = django_rq.get_queue("default")
         job_id = "reid.create.{}".format(jid)
         job = queue.fetch_job(job_id)
         if job is not None and (job.is_started or job.is_queued):
@@ -47,7 +47,7 @@ def start(request, jid):
     fn=objectgetter(Job, 'jid'), raise_exception=True)
 def check(request, jid):
     try:
-        queue = django_rq.get_queue("low")
+        queue = django_rq.get_queue("default")
         rq_id = "reid.create.{}".format(jid)
         job = queue.fetch_job(rq_id)
         if job is not None and "cancel" in job.meta:
@@ -82,7 +82,7 @@ def check(request, jid):
     fn=objectgetter(Job, 'jid'), raise_exception=True)
 def cancel(request, jid):
     try:
-        queue = django_rq.get_queue("low")
+        queue = django_rq.get_queue("default")
         rq_id = "reid.create.{}".format(jid)
         job = queue.fetch_job(rq_id)
         if job is None or job.is_finished or job.is_failed:
