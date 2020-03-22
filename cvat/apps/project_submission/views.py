@@ -76,7 +76,9 @@ class Leaderboard(LoginRequiredMixin, View):
                                      .prefetch_related('project_submissions')
                                      .annotate(map_leaderboard_score
                                                =Max('project_submissions__mean_average_precision_leaderboard'))).order_by('-map_leaderboard_score')
-        form = self.form(initial={'show_on_leaderboard': show_on_leaderboard})
+
+        show_this_group_on_leaderboard = request.user.leaderboard_settings.show_on_leaderboard
+        form = self.form(initial={'show_on_leaderboard': show_this_group_on_leaderboard})
         return render(request, self.template, {
             'users_with_map_annotation': users_with_map_annotation,
             'form': form
