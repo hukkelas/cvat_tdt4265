@@ -756,6 +756,20 @@ class TaskViewSet(auth.TaskGetQuerySetMixin, viewsets.ModelViewSet):
             result_ttl=ttl, failure_ttl=ttl)
         return Response(status=status.HTTP_202_ACCEPTED)
 
+    def list(self, request, *args, **kwargs):
+        queryset = list(self.filter_queryset(self.get_queryset()))
+        queryset.sort(key=lambda task: task.id)
+        # Sory test samples first
+        queryset.sort(key=lambda task: -int(task.is_test()))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 @method_decorator(name='retrieve', decorator=swagger_auto_schema(operation_summary='Method returns details of a job'))
 @method_decorator(name='update', decorator=swagger_auto_schema(operation_summary='Method updates a job by id'))
 @method_decorator(name='partial_update', decorator=swagger_auto_schema(
@@ -869,6 +883,19 @@ class UserViewSet(viewsets.GenericViewSet, mixins.ListModelMixin,
         """
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(request.user, context={ "request": request })
+        return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if not has_admin_role(request.user):
+            queryset = [user for user in self.queryset if user.id == request.user.id]
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 class PluginViewSet(viewsets.ModelViewSet):
