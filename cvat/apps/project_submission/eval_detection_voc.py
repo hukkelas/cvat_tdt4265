@@ -27,6 +27,8 @@ def annotation_file_to_np_arrays(annotation_filefield):
     annotation_json = json.loads(annotation_filefield.read().decode())
     # Just loop over images to create the np.ndarrays
     for image_annotation in annotation_json:
+        if not image_annotation.get('is_test', True):
+            continue
         image_id = image_annotation['image_id']
         labels[image_id] = np.array([settings.LABEL_MAP[bbox['label']] for bbox in image_annotation['bounding_boxes']])
         scores[image_id] = np.array([bbox.get('confidence', 1.0) for bbox in image_annotation['bounding_boxes']])
