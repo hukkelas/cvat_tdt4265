@@ -66,7 +66,9 @@ class ProjectSubmission(models.Model):
                 self.save()
                 return
 
-            solution = solution.first()
+            # if, for some reason there are multiple entries marked 'is_solution=True'
+            # Then this will get thon added last
+            solution = solution.order_by('-id').first()
 
             map_tot, map_lb = compute_submission_map(self.submission_json,
                                                      solution.submission_json)
