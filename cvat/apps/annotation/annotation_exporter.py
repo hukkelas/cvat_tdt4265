@@ -1,7 +1,6 @@
 import pathlib
 import json
 import os.path as osp
-import time
 from cvat.apps.engine.models import Task, StatusChoice
 from django.db import transaction
 from cvat.apps.engine.annotation import TaskAnnotation
@@ -9,6 +8,7 @@ from cvat.apps.annotation.annotation import Annotation
 from django.conf import settings
 from cvat.apps.engine.log import slogger
 from django.utils import timezone
+
 
 def get_annotation(task, include_test):
     with transaction.atomic():
@@ -20,16 +20,20 @@ def get_annotation(task, include_test):
     )
     converted_annotation = [
     ]
-    for frame in annotation.group_by_frame():
-        frame_idx = frame.frame
-        annotation_completed = task.status == StatusChoice.COMPLETED
+    for frame_idx in range(task.size):
         frame_annotation = {}
         frame_annotation["image_id"] = task.get_global_image_id(frame_idx)
         frame_annotation["video_id"] = task.id
+        annotation_completed = task.status == StatusChoice.COMPLETED
         frame_annotation["annotation_completed"] = annotation_completed
         frame_annotation["bounding_boxes"] = []
         frame_annotation["is_test"] = task.is_test()
         converted_annotation.append(frame_annotation)
+
+    for frame in annotation.group_by_frame():
+        frame_idx = frame.frame
+        frame_annotation = converted_annotation[frame_idx]
+        assert frame_annotation["image_id"] == task.get_global_image_id(frame_idx)
         if task.is_test() and not include_test:
             continue
         for labeled_shape in frame.labeled_shapes:
