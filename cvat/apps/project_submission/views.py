@@ -38,9 +38,6 @@ class SubmitAnnotation(LoginRequiredMixin, View):
         })
     def post(self, request):
         submission_form = self.form(request.POST, request.FILES)
-        print(request)
-        print(request.POST)
-        print(request.FILES)
         if submission_form.is_valid():
             submission = submission_form.save(commit=False)
             submission.user = request.user

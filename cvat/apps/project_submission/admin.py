@@ -2,6 +2,9 @@ from django.contrib import admin
 
 from .models import ProjectSubmission, LeaderboardSettings
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def recompute_mean_average_precision(modeladmin, request, queryset):
     if not ProjectSubmission.objects.filter(is_solution=True).exists():
@@ -9,9 +12,9 @@ def recompute_mean_average_precision(modeladmin, request, queryset):
     for submission in queryset:
         try:
             submission.update_mean_average_precision()
-        except:
+        except Exception as e:
             # if a submission has json that for some reason can't be parsed
-            pass
+            logger.error('Failed to update mean average precision for submission' + str(submission) + ': '+str(e))
 
 recompute_mean_average_precision.short_description = 'Recompute MAP based on the solution file.'
 

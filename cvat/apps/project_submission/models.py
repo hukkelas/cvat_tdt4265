@@ -67,13 +67,11 @@ class ProjectSubmission(models.Model):
                 return
 
             solution = solution.first()
-            if self == solution:
-                self.mean_average_precision_leaderboard = 1.0
-                self.mean_average_precision_total = 1.0
-            else:
-                map_tot, map_lb = compute_submission_map(self.submission_json, solution.submission_json)
-                self.mean_average_precision_leaderboard = map_lb
-                self.mean_average_precision_total = map_tot
+
+            map_tot, map_lb = compute_submission_map(self.submission_json,
+                                                     solution.submission_json)
+            self.mean_average_precision_leaderboard = map_lb
+            self.mean_average_precision_total = map_tot
             self.save()
 
     def __str__(self):

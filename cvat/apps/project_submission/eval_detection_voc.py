@@ -1,6 +1,7 @@
 """
 from hukkelas/TDT4265
 """
+import logging
 
 from collections import defaultdict
 import itertools
@@ -9,7 +10,10 @@ import six
 import json
 
 from django.conf import settings
+logger = logging.getLogger(__name__)
 
+# Parsed solution file json
+solution_filepath = None
 solution_annotation = None
 
 def annotation_file_to_np_arrays(annotation_filefield):
@@ -41,9 +45,16 @@ def compute_submission_map(submission_filefield,
                            solution_filefield,
                            leaderboard_data_amount: float = 0.3):
     global solution_annotation
+    global solution_filepath
     if solution_annotation is None:
         # Cache in memory
         solution_annotation = annotation_file_to_np_arrays(solution_filefield)
+        solution_filepath = str(solution_filefield.name)
+    elif solution_filepath is None or solution_filepath != solution_filefield.name:
+        logger.warn('Solution has been updated on disk. Using new solution file ' + str(solution_filefield))
+        solution_annotation = annotation_file_to_np_arrays(solution_filefield)
+        solution_filepath = str(solution_filefield.name)
+
     group_annotation = annotation_file_to_np_arrays(submission_filefield)
 
     try:
