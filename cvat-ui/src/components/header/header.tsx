@@ -179,35 +179,16 @@ function HeaderContainer(props: Props): JSX.Element {
                     className='cvat-header-button'
                     type='link'
                     value='tasks'
-                    onClick={
-                        (): void => props.history.push('/tasks?page=1')
-                    }
                 >
-                    Upload Result (Not yet available)
+                    <a href="/submissions/">Your Submissions </a>
                 </Button>
                 <Button
                     className='cvat-header-button'
                     type='link'
                     value='tasks'
-                    onClick={
-                        (): void => props.history.push('/tasks?page=1')
-                    }
                 >
-                    Leaderboard (Not yet available)
+                    <a href="/submissions/">Leaderboard</a>
                 </Button>
-                { renderModels
-                    && (
-                        <Button
-                            className='cvat-header-button'
-                            type='link'
-                            value='models'
-                            onClick={
-                                (): void => props.history.push('/models')
-                            }
-                        >
-                            Models
-                        </Button>
-                    )}
                 { installedAnalytics
                     && (
                         <Button
