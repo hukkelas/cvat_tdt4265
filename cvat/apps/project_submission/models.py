@@ -11,8 +11,6 @@ from .validators import validate_json_formatted
 
 User = get_user_model()
 
-ground_truth_path="foo"
-
 
 class ProjectSubmission(models.Model):
     user = models.ForeignKey(
