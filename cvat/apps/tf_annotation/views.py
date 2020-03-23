@@ -191,7 +191,7 @@ def convert_to_cvat_format(data):
 
 def create_thread(tid, labels_mapping, user):
     try:
-        TRESHOLD = 0.5
+        TRESHOLD = 0.7
         # Init rq job
         job = rq.get_current_job()
         job.meta['progress'] = 0
