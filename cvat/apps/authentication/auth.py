@@ -114,16 +114,13 @@ def is_job_owner(db_user, db_job):
 @rules.predicate
 def is_job_annotator(db_user, db_job):
     db_task = db_job.segment.task
-    # A job can be annotated by any user if the task's assignee is None.
-    has_rights = db_task.assignee is None or is_task_assignee(db_user, db_task)
-    if db_job.assignee is not None:
-        has_rights |= (db_user == db_job.assignee)
-
-    return has_rights
+    if db_task.assignee is not None:
+        return db_user == db_task.assignee
+    return True
 
 @rules.predicate
 def has_task_no_assignee(db_user, db_task):
-    return db_task.assignee == None
+    return db_task.assignee_id is None
 
 # AUTH PERMISSIONS RULES
 
@@ -156,10 +153,9 @@ rules.add_perm('engine.task.change', has_admin_role | has_task_no_assignee)
 
 rules.add_perm('engine.task.delete', has_admin_role)
 
-rules.add_perm('engine.job.access', has_admin_role | has_observer_role |
-    is_job_owner | is_job_annotator)
+rules.add_perm('engine.job.access', has_admin_role | is_job_annotator)
 
-rules.add_perm('engine.job.change', has_admin_role | is_job_owner | is_job_annotator)
+rules.add_perm('engine.job.change', has_admin_role | is_job_annotator)
 
 
 class AdminRolePermission(BasePermission):
