@@ -119,6 +119,13 @@ def is_job_annotator(db_user, db_job):
     return True
 
 @rules.predicate
+def can_edit_job(db_user, db_job):
+    db_task = db_job.segment.task
+    if db_task.assignee is None:
+        return False
+    return db_user == db_task.assignee
+
+@rules.predicate
 def has_task_no_assignee(db_user, db_task):
     return db_task.assignee_id is None
 
@@ -155,7 +162,7 @@ rules.add_perm('engine.task.delete', has_admin_role)
 
 rules.add_perm('engine.job.access', has_admin_role | is_job_annotator)
 
-rules.add_perm('engine.job.change', has_admin_role | is_job_annotator)
+rules.add_perm('engine.job.change', has_admin_role | can_edit_job)
 
 
 class AdminRolePermission(BasePermission):
