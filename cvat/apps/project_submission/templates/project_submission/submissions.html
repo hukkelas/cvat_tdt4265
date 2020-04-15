@@ -15,6 +15,7 @@
       <thead>
         <tr>
           <th><strong class="ant-typography">Submission</strong></th>
+          <th><strong class="ant-typography">Update time</strong></th>
           <th><strong class="ant-typography">MAP Result</strong></th>
         </tr>
       </thead>
@@ -22,6 +23,7 @@
         {% for submission in submissions %}
         <tr>
           <td><span class="ant-typography">{{ submission }}</span></td>
+          <td><span class="ant-typography">{{ submission.timestamp }}</span></td>
           <td><span class="ant-typography">{{ submission.mean_average_precision_leaderboard }}</span></td>
         </tr>
         {% endfor %}

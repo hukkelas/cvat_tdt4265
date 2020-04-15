@@ -27,7 +27,7 @@ class ProjectSubmission(models.Model):
         verbose_name="Submission JSON"
     )
     timestamp = models.DateTimeField(
-        auto_now_add=True,
+        auto_now=True,
         verbose_name="Submission time"
     )
     mean_average_precision_leaderboard = models.FloatField(
@@ -43,11 +43,9 @@ class ProjectSubmission(models.Model):
     is_solution = models.BooleanField(
         default=False,
     )
-
-    #mean_average_precision_leaderboard = models.FloatField(
-    #    default=None,
-    #    null=True
-    #)
+    is_baseline = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         ordering = ["-mean_average_precision_leaderboard", "id"]
@@ -65,8 +63,8 @@ class ProjectSubmission(models.Model):
                 return
 
             # if, for some reason there are multiple entries marked 'is_solution=True'
-            # Then this will get thon added last
-            solution = solution.order_by('-id').first()
+            # Then this will get the one updated last
+            solution = solution.order_by('-timestamp').first()
 
             map_tot, map_lb = compute_submission_map(self.submission_json,
                                                      solution.submission_json)
@@ -78,6 +76,7 @@ class ProjectSubmission(models.Model):
         if self.is_solution:
             return 'Solution'
         return 'Submission ' + str(os.path.basename(self.submission_json.name)) + ' from ' + str(self.user) + ' submitted at ' + str(self.timestamp)
+
 
 
 

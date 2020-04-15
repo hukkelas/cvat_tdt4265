@@ -19,8 +19,9 @@ def recompute_mean_average_precision(modeladmin, request, queryset):
 recompute_mean_average_precision.short_description = 'Recompute MAP based on the solution file.'
 
 class ProjectSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'is_solution', 'timestamp', 'mean_average_precision_total',  'mean_average_precision_leaderboard']
-    ordering = ['-is_solution', '-timestamp']
+    list_display = ['__str__', 'is_solution', 'is_baseline', 'timestamp', 'mean_average_precision_total',  'mean_average_precision_leaderboard']
+    readonly_fields = ['timestamp']
+    ordering = ['-is_solution', '-is_baseline', '-timestamp']
     actions = [recompute_mean_average_precision]
 
 

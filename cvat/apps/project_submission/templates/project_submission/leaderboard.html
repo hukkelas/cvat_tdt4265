@@ -13,7 +13,8 @@
       <input type="submit" class="ant-btn ant-btn-primary" value="Save">
     </form>
     <hr>
-    <span class="ant-typography cvat-title">Leaderboard</span>
+    <span class="ant-typography cvat-title">Leaderboard</span><br>
+    <span class="ant-typography ">Last update of solution/baselines: <b>{{ most_recent_update }}</b></span>
   </div>
   <br>
   <div id="table-responsive-wrapper" class="table-responsive">
@@ -28,6 +29,7 @@
       <tbody>
         {% for user in users_with_map_annotation %}
         <tr>
+          {# counter == group rank #}
           <td><span class="ant-typography">{{ forloop.counter }}</span></td>
           <td><span class="ant-typography">{{ user }}</span></td>
           <td><span class="ant-typography">{{ user.map_leaderboard_score }}</span></td>

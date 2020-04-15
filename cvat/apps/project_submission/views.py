@@ -1,7 +1,7 @@
 import logging
 
 
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
@@ -69,15 +69,27 @@ class Leaderboard(LoginRequiredMixin, View):
     def get(self, request):
         submissions = ProjectSubmission.objects.filter(is_solution=False)
         users_to_show_on_leaderboard = User.objects.filter(id__in=submissions.values('user__id')).select_related('leaderboard_settings').filter(leaderboard_settings__show_on_leaderboard=True)
+
         users_with_map_annotation = (users_to_show_on_leaderboard
-                                     .prefetch_related('project_submissions')
-                                     .annotate(map_leaderboard_score
-                                               =Max('project_submissions__mean_average_precision_leaderboard'))).order_by('-map_leaderboard_score')
+                                     .prefetch_related('project_submissions')                                               # In order to refer to a user's project_submissions
+                                     .annotate(map_leaderboard_score                                                        # Their best score
+                                               =Max('project_submissions__mean_average_precision_leaderboard'))
+                                     .annotate(most_recent_update                                                           # Their most recent update (only displayed for baseline submissions)
+                                               =Max('project_submissions__timestamp'))
+                                     ).order_by('-map_leaderboard_score')
+        # this is terrible code but it solves the issue of only showing updates for baseline users
+
+        baselines_and_solutions =  ProjectSubmission.objects.filter(Q(is_baseline=True) | Q(is_solution=True)).order_by('-timestamp')
+        most_recent_update = 'Never'
+        if baselines_and_solutions.exists():
+            most_recent_update = baselines_and_solutions.first().timestamp
+
 
         show_this_group_on_leaderboard = request.user.leaderboard_settings.show_on_leaderboard
         form = self.form(initial={'show_on_leaderboard': show_this_group_on_leaderboard})
         return render(request, self.template, {
             'users_with_map_annotation': users_with_map_annotation,
+            'most_recent_update': most_recent_update,
             'form': form
         })
 
