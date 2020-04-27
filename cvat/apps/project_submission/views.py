@@ -74,6 +74,8 @@ class Leaderboard(LoginRequiredMixin, View):
                                      .prefetch_related('project_submissions')                                               # In order to refer to a user's project_submissions
                                      .annotate(map_leaderboard_score                                                        # Their best score
                                                =Max('project_submissions__mean_average_precision_leaderboard'))
+                                     .annotate(
+                                         map_leaderboard_score_total=Max('project_submissions__mean_average_precision_total'))
                                      .annotate(most_recent_update                                                           # Their most recent update (only displayed for baseline submissions)
                                                =Max('project_submissions__timestamp'))
                                      ).order_by('-map_leaderboard_score')

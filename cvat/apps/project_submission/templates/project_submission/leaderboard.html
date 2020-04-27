@@ -23,7 +23,8 @@
         <tr>
           <th><strong class="ant-typography">Rank</strong></th>
           <th><strong class="ant-typography">Group</strong></th>
-          <th><strong class="ant-typography">MAP Result</strong></th>
+          <th><strong class="ant-typography">MAP Result (30% of Dataset)</strong></th>
+          <th><strong class="ant-typography">MAP Result (Total Dataset)</strong></th>
         </tr>
       </thead>
       <tbody>
@@ -33,6 +34,7 @@
           <td><span class="ant-typography">{{ forloop.counter }}</span></td>
           <td><span class="ant-typography">{{ user }}</span></td>
           <td><span class="ant-typography">{{ user.map_leaderboard_score }}</span></td>
+          <td><span class="ant-typography">{{ user.map_leaderboard_score_total }}</span></td>
         </tr>
         {% endfor %}
       </tbody>
