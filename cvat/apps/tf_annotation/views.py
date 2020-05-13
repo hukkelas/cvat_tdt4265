@@ -198,6 +198,9 @@ def create_thread(tid, labels_mapping, user):
         job.save_meta()
         # Get job indexes and segment length
         db_task = TaskModel.objects.get(pk=tid)
+        if db_task.status == "completed":
+            slogger.glob.info('tf annotation with tensorflow framework for task {} cancelled since task is already done'.format(tid))
+            return None
         # Get image list
         image_list = make_image_list(db_task.get_data_dirname())
 
@@ -205,6 +208,9 @@ def create_thread(tid, labels_mapping, user):
         result = None
         slogger.glob.info("tf annotation with tensorflow framework for task {}".format(tid))
         result = run_tensorflow_annotation(image_list, labels_mapping, TRESHOLD)
+        if db_task.status == "completed":
+            slogger.glob.info('tf annotation with tensorflow framework for task {} cancelled since task is already done'.format(tid))
+            return None
 
         if result is None:
             slogger.glob.info('tf annotation for task {} canceled by user'.format(tid))

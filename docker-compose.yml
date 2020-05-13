@@ -46,7 +46,7 @@ services:
         no_proxy:
         socks_proxy:
         TF_ANNOTATION: "yes"
-        AUTO_SEGMENTATION: "yes"
+        AUTO_SEGMENTATION: "no"
         USER: "django"
         DJANGO_CONFIGURATION: "production"
         TZ: "Etc/UTC"
@@ -59,6 +59,8 @@ services:
       - cvat_keys:/home/django/keys
       - cvat_logs:/home/django/logs
       - cvat_models:/home/django/models
+      - cvat_work:/work
+
 
   cvat_ui:
     container_name: cvat_ui
@@ -87,7 +89,7 @@ services:
       - cvat
       - cvat_ui
     environment:
-      CVAT_HOST: localhost
+      CVAT_HOST: tdt4265-annotering.idi.ntnu.no 
     ports:
       - "8080:80"
     volumes:
@@ -98,6 +100,16 @@ services:
 volumes:
   cvat_db:
   cvat_data:
+      driver_opts:
+          type: none
+          device: /work/data/cvat_data 
+          o: bind
   cvat_keys:
   cvat_logs:
   cvat_models:
+  cvat_work: 
+      driver_opts:
+          type: none
+          device: /work/data/cvat_work
+          o: bind
+

@@ -7,7 +7,8 @@ archive_path = pathlib.Path(settings.DATA_ROOT, "images_mini.zip")
 source_to_target_path = {}
 for task in Task.objects.all():
     for frame_idx in range(task.size):
-        if (frame_idx % 7) != 0 and not task.is_test():
+        global_id = task.get_global_image_id(frame_idx)
+        if (global_id % 7) != 0:
             continue
         source_path = task.get_frame_path(frame_idx)
         suffix = pathlib.Path(source_path).suffix
